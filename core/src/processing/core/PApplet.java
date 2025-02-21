@@ -1398,18 +1398,23 @@ public class PApplet implements PConstants {
 
   private void registerNoArgs(String name, Object o) {
     Class<?> c = o.getClass();
+    
     try {
+      //Grab method name and attempt to match to already stored value
       Method method = c.getMethod(name);
       RegisteredMethods meth = registerMap.get(name);
+
+      //If specific method name doesn't exist create a new method to match before adding to the registerMap.
       if (meth == null) {
         meth = new RegisteredMethods();
         registerMap.put(name, meth);
       }
+
+      //Add the specific object target to the related method.
       meth.add(o, method);
     } catch (NoSuchMethodException nsme) {
-      die("There is no public " + name + "() method in the class " +
-          o.getClass().getName());
-
+      die("There is no public " + name + "() method in the class " + c.getName());
+      
     } catch (Exception e) {
       die("Could not register " + name + " + () for " + o, e);
     }
@@ -1418,35 +1423,47 @@ public class PApplet implements PConstants {
 
   private void registerWithArgs(String name, Object o, Class<?>[] cargs) {
     Class<?> c = o.getClass();
+    
     try {
+      //Grab method name and method arguments, see if they match a stored value.
       Method method = c.getMethod(name, cargs);
       RegisteredMethods meth = registerMap.get(name);
+
+      //If no stored value, create a new one in the registerMap.
       if (meth == null) {
         meth = new RegisteredMethods();
         registerMap.put(name, meth);
       }
+
+      //Finally attach the specific target to the stored value.
       meth.add(o, method);
     } catch (NoSuchMethodException nsme) {
-      die("There is no public " + name + "() method in the class " +
-          o.getClass().getName());
+      die("There is no public " + name + "() method in the class " + c.getName());
 
     } catch (Exception e) {
       die("Could not register " + name + " + () for " + o, e);
     }
   }
 
-
+  /**
+	   * Remove a pre-registered method that was originally called using the built in {@linkplain PApplet#registerMethod} method.
+	   * <p>
+	   * Safely disconnects a targeted method/object pair when it is no longer convenient to have it subscribed to method calls.
+	   * @see PApplet#registerMethod(String, Object)
+	   * @param methodName name of the method to be unregistered
+	   * @param target the specific target object that should be unregistered
+	   */
   public void unregisterMethod(String name, Object target) {
     RegisteredMethods meth = registerMap.get(name);
     if (meth == null) {
       die("No registered methods with the name " + name + "() were found.");
-
-    } else {
-      try {
-        meth.remove(target);
-      } catch (Exception e) {
-        die("Could not unregister " + name + "() for " + target, e);
-      }
+      return;
+    }
+    try {
+      meth.remove(target);
+      
+    } catch(Exception e) {
+      die("Could not unregister " + name + "() for " + target, e); 
     }
   }
 
